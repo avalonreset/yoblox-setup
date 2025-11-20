@@ -15,7 +15,7 @@ const fs = require('fs');
 
 // GitHub repo config
 const GITHUB_REPO = 'avalonreset/yoblox';
-const GITHUB_BRANCH = 'main';
+const GITHUB_BRANCH = 'master';
 const GITHUB_CODELOAD_URL = `https://codeload.github.com/${GITHUB_REPO}/zip/refs/heads/${GITHUB_BRANCH}`;
 
 module.exports = {
