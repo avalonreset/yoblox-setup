@@ -1,0 +1,50 @@
+{
+  "name": "yoblox-setup",
+  "version": "1.0.0",
+  "description": "Interactive setup wizard for AI-ready Roblox game development environment",
+  "main": "index.js",
+  "bin": {
+    "yoblox-setup": "./bin/yoblox-setup"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:exe": "pkg package.json --targets node18-win-x64 --output dist/yoblox-setup.exe"
+  },
+  "keywords": [
+    "roblox",
+    "rojo",
+    "setup",
+    "wizard",
+    "cli",
+    "game-development",
+    "luau",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "boxen": "^5.1.2",
+    "ora": "^5.4.1",
+    "cli-progress": "^3.12.0",
+    "enquirer": "^2.4.1",
+    "execa": "^5.1.1",
+    "open": "^8.4.2",
+    "semver": "^7.5.4",
+    "glob": "^10.3.10",
+    "got": "^11.8.6"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}

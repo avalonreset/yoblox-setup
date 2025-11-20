@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+
+/**
+ * yoblox-setup CLI Entry Point
+ *
+ * This is the executable entry point for the yoblox-setup wizard.
+ * It simply requires and runs the main index.js file.
+ */
+
+require('../index.js');
