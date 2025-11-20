@@ -11,6 +11,8 @@ const { promisify } = require('util');
 const got = require('got');
 const execa = require('execa');
 const open = require('open');
+const AdmZip = require('adm-zip');
+const fse = require('fs-extra');
 const logger = require('./logger');
 const config = require('../config');
 
@@ -250,6 +252,92 @@ async function execCommand(command) {
   }
 }
 
+/**
+ * Extract a zip file to a destination directory
+ * @param {string} zipPath - Path to the zip file
+ * @param {string} destPath - Destination directory
+ * @returns {Promise<void>}
+ */
+async function extractZip(zipPath, destPath) {
+  try {
+    const zip = new AdmZip(zipPath);
+
+    // Ensure destination exists
+    if (!fs.existsSync(destPath)) {
+      fs.mkdirSync(destPath, { recursive: true });
+    }
+
+    zip.extractAllTo(destPath, true);
+  } catch (error) {
+    throw new Error(`Failed to extract zip: ${error.message}`);
+  }
+}
+
+/**
+ * Recursively copy a directory, excluding certain patterns
+ * @param {string} src - Source directory
+ * @param {string} dest - Destination directory
+ * @param {Array<string>} excludePatterns - Patterns to exclude (e.g., ['.git', 'node_modules'])
+ * @returns {Promise<void>}
+ */
+async function copyDirectory(src, dest, excludePatterns = ['.git', 'node_modules', '.gitignore']) {
+  try {
+    // Use fs-extra for recursive copy
+    await fse.copy(src, dest, {
+      filter: (filePath) => {
+        // Check if path matches any exclude pattern
+        for (const pattern of excludePatterns) {
+          if (filePath.includes(pattern)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+  } catch (error) {
+    throw new Error(`Failed to copy directory: ${error.message}`);
+  }
+}
+
+/**
+ * Cleanup temporary directory
+ * @param {string} dirPath - Directory to remove
+ * @returns {Promise<void>}
+ */
+async function cleanupDirectory(dirPath) {
+  try {
+    if (fs.existsSync(dirPath)) {
+      await fse.remove(dirPath);
+    }
+  } catch (error) {
+    logger.warning(`Could not cleanup temporary directory: ${error.message}`);
+  }
+}
+
+/**
+ * Find a directory within a given path that matches a pattern
+ * Useful for finding 'yoblox-main' or 'yoblox-develop' folders
+ * @param {string} parentPath - Parent directory to search in
+ * @param {string} pattern - Pattern to match (e.g., 'yoblox-*')
+ * @returns {string|null} Full path to matching directory or null
+ */
+function findDirectory(parentPath, pattern) {
+  try {
+    const entries = fs.readdirSync(parentPath);
+
+    // Match against pattern (simple glob-like matching)
+    const regex = new RegExp(`^${pattern.replace('*', '.*')}$`);
+    const matching = entries.find(entry => {
+      const fullPath = path.join(parentPath, entry);
+      return fs.statSync(fullPath).isDirectory() && regex.test(entry);
+    });
+
+    return matching ? path.join(parentPath, matching) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 module.exports = {
   downloadFile,
   runCommand,
@@ -259,5 +347,9 @@ module.exports = {
   installNpmPackage,
   openURL,
   waitForFile,
-  execCommand
+  execCommand,
+  extractZip,
+  copyDirectory,
+  cleanupDirectory,
+  findDirectory
 };
