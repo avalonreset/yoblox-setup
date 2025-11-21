@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const validator = require('../utils/validator');
 const installer = require('../utils/installer');
 const prompt = require('../utils/prompt');
+const versionChecker = require('../utils/versionChecker');
 const system = require('../utils/system');
 const config = require('../config');
 
@@ -23,12 +24,65 @@ module.exports = {
     logger.header('Rust + Cargo', 4, 9);
 
     // Check if already installed
-    const checkResult = await this.check(context);
+    const checkResult = await validator.checkRust();
 
     if (checkResult.found) {
       logger.success(`✓ Rust is already installed`);
-      logger.info(`  rustc: ${checkResult.rustc}`);
-      logger.info(`  cargo: ${checkResult.cargo}`);
+      logger.newline();
+
+      // Check for updates
+      logger.info('Checking for updates...');
+      const updateInfo = await versionChecker.checkRustUpdate();
+
+      if (updateInfo.error) {
+        logger.warning(`Could not check for updates: ${updateInfo.error}`);
+        logger.info('Continuing with current version...');
+      } else if (updateInfo.hasUpdate) {
+        logger.newline();
+        logger.warning('⚠️  A newer version of Rust is available!');
+        logger.info(`  Current version: ${updateInfo.current}`);
+        logger.info(`  Latest version: ${updateInfo.latest}`);
+        logger.newline();
+
+        const shouldUpdate = await prompt.confirm(
+          `Would you like to update Rust to ${updateInfo.latest}?`,
+          true
+        );
+
+        if (shouldUpdate) {
+          logger.newline();
+          logger.info('Updating Rust via rustup...');
+          logger.info('This will take a few minutes...');
+          logger.newline();
+
+          // Run rustup update
+          const updateResult = await installer.runCommand('rustup', ['update']);
+
+          if (updateResult.success) {
+            logger.newline();
+            logger.success(`✓ Rust updated successfully!`);
+            logger.newline();
+
+            // Verify update
+            const verifyResult = await validator.checkRust();
+            if (verifyResult.found) {
+              logger.info(`  rustc: ${verifyResult.rustc}`);
+              logger.info(`  cargo: ${verifyResult.cargo}`);
+            }
+          } else {
+            logger.error('Update failed. Continuing with current version...');
+            logger.info('You can try updating manually with: rustup update');
+          }
+        } else {
+          logger.info(`Continuing with Rust ${updateInfo.current}`);
+        }
+      } else {
+        logger.success(`✓ Rust is up-to-date (v${updateInfo.current})`);
+      }
+
+      logger.newline();
+      logger.divider();
+      logger.newline();
 
       return {
         success: true,
@@ -37,7 +91,8 @@ module.exports = {
             ...context.installedTools,
             rust: true,
             cargo: true
-          }
+          },
+          rustVersion: updateInfo.current || checkResult.rustc
         }
       };
     }

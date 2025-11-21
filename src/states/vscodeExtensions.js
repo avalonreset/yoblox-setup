@@ -7,6 +7,8 @@
 const logger = require('../utils/logger');
 const validator = require('../utils/validator');
 const installer = require('../utils/installer');
+const versionChecker = require('../utils/versionChecker');
+const prompt = require('../utils/prompt');
 const config = require('../config');
 
 module.exports = {
@@ -37,13 +39,14 @@ module.exports = {
       return { success: true, skip: true };
     }
 
-    logger.info('Installing required VS Code extensions for Luau development.');
+    logger.info('Checking VS Code extensions for Luau development.');
     logger.newline();
 
     let allSucceeded = true;
     const installedExtensions = [];
+    const extensionsWithUpdates = [];
 
-    // Install each extension
+    // Check each extension
     for (const extension of config.VSCODE_EXTENSIONS) {
       // Check if already installed
       const checkResult = await validator.checkVSCodeExtension(extension.id);
@@ -51,10 +54,26 @@ module.exports = {
       if (checkResult.found) {
         logger.success(`✓ ${extension.name} is already installed`);
         installedExtensions.push(extension.id);
+
+        // Check for updates
+        logger.info(`  Checking for updates...`);
+        const updateInfo = await versionChecker.checkVSCodeExtensionUpdate(extension.id);
+
+        if (updateInfo.error) {
+          logger.warning(`  Could not check for updates: ${updateInfo.error}`);
+        } else if (updateInfo.hasUpdate) {
+          logger.warning(`  ⚠️  Update available: ${updateInfo.current} → ${updateInfo.latest}`);
+          extensionsWithUpdates.push({ extension, updateInfo });
+        } else {
+          logger.info(`  Up-to-date (v${updateInfo.current})`);
+        }
+
+        logger.newline();
         continue;
       }
 
       // Install extension
+      logger.info(`Installing ${extension.name}...`);
       const success = await installer.installVSCodeExtension(extension.id);
 
       if (success) {
@@ -62,6 +81,44 @@ module.exports = {
       } else {
         allSucceeded = false;
         logger.error(`Failed to install ${extension.name}`);
+      }
+
+      logger.newline();
+    }
+
+    // Offer to update extensions if any updates are available
+    if (extensionsWithUpdates.length > 0) {
+      logger.newline();
+      logger.warning(`${extensionsWithUpdates.length} extension(s) have updates available:`);
+      extensionsWithUpdates.forEach(({ extension, updateInfo }) => {
+        logger.info(`  • ${extension.name}: ${updateInfo.current} → ${updateInfo.latest}`);
+      });
+      logger.newline();
+
+      const shouldUpdateAll = await prompt.confirm(
+        'Would you like to update all extensions now?',
+        true
+      );
+
+      if (shouldUpdateAll) {
+        logger.newline();
+        logger.info('Updating extensions...');
+        logger.newline();
+
+        for (const { extension } of extensionsWithUpdates) {
+          const success = await installer.installVSCodeExtension(extension.id);
+          if (success) {
+            logger.success(`✓ ${extension.name} updated!`);
+          } else {
+            logger.error(`Failed to update ${extension.name}`);
+          }
+        }
+
+        logger.newline();
+        logger.success('Extension updates complete!');
+      } else {
+        logger.info('Continuing with current versions.');
+        logger.info('You can update extensions later from VS Code.');
       }
     }
 
