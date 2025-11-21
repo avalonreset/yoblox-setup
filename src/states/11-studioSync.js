@@ -1051,11 +1051,11 @@ async function openRojoPanel() {
   ]);
   logger.newline();
 
-  // Verification
-  const opened = await prompt.confirm('Can you see the Rojo panel open in Studio?', true);
+  // Verification - Step 1: Panel is visible
+  const panelVisible = await prompt.confirm('Can you see the Rojo panel open in Studio?', true);
   logger.newline();
 
-  if (!opened) {
+  if (!panelVisible) {
     logger.error('Rojo panel not found.');
     logger.newline();
     logger.info('Let\'s troubleshoot:');
@@ -1140,6 +1140,82 @@ async function openRojoPanel() {
 
   logger.success('✓ Rojo panel is open!');
   logger.newline();
+
+  // Verification - Step 2: Per-place activation
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.info('  🔧 ACTIVATE PLUGIN IN THIS PLACE');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.newline();
+
+  logger.warning('⚠️  One more quick step: Per-place activation');
+  logger.newline();
+  logger.info('Roblox plugins need to be "installed" in each place for security.');
+  logger.info('This is normal behavior and only takes one click!');
+  logger.newline();
+
+  logger.info('📋 Look at the Rojo panel in Studio:');
+  logger.newline();
+
+  const hasInstallButton = await prompt.confirm(
+    'Do you see an "Install" button in the Rojo panel?',
+    true
+  );
+
+  logger.newline();
+
+  if (hasInstallButton) {
+    logger.info('Perfect! Here\'s what to do:');
+    logger.newline();
+    logger.list([
+      '1. Click the blue "Install" button in the Rojo panel',
+      '2. Wait 1-2 seconds for it to activate',
+      '3. The panel will change to show:',
+      '   • A text box for server address',
+      '   • A "Connect" button',
+      '   • Connection status area'
+    ]);
+    logger.newline();
+
+    logger.info('💡 After clicking Install, the panel transforms into the connection interface!');
+    logger.newline();
+
+    await prompt.confirm('Press Enter after clicking Install...', true);
+    logger.newline();
+
+    logger.success('✓ Plugin activated in this place!');
+    logger.newline();
+
+    // Verify they see connection interface
+    const hasConnectUI = await prompt.confirm(
+      'Do you now see a text box and "Connect" button in the panel?',
+      true
+    );
+
+    logger.newline();
+
+    if (!hasConnectUI) {
+      logger.warning('The connection interface isn\'t showing yet.');
+      logger.info('Try these steps:');
+      logger.list([
+        'Wait a few more seconds (plugin is still loading)',
+        'Click the Rojo button in toolbar again to refresh',
+        'Close and reopen Studio if needed',
+        'The panel should show connection options after Install'
+      ]);
+      logger.newline();
+
+      const retry = await prompt.confirm('Ready to try again?', true);
+      return retry ? openRojoPanel() : false;
+    }
+
+    logger.success('✓ Perfect! The Rojo panel is ready to connect.');
+    logger.newline();
+  } else {
+    logger.success('✓ Great! The panel is already activated.');
+    logger.info('You should see the connection interface with a text box and Connect button.');
+    logger.newline();
+  }
+
   return true;
 }
 
