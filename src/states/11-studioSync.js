@@ -262,23 +262,142 @@ async function launchStudio(studioCheck) {
 
       switch (issue) {
         case 'error':
-          logger.info('Common error fixes:');
-          logger.list([
-            'If "expired channel build": Click OK, let it update, wait 1-2 minutes',
-            'If "failed to download": Check your internet connection',
-            'If "missing files": Reinstall Studio from roblox.com/create',
-            'If antivirus warning: Allow Studio and try again'
+          logger.info('Let\'s figure out which error you got:');
+          logger.newline();
+
+          const errorType = await prompt.select('Which error message did you see?', [
+            { name: 'expired', message: 'Expired channel build' },
+            { name: 'download', message: 'Failed to download / Network error / Forbidden' },
+            { name: 'missing', message: 'Missing files / Corrupt installation' },
+            { name: 'antivirus', message: 'Antivirus or security warning' },
+            { name: 'other', message: 'Different error / Not sure' }
           ]);
+
+          logger.newline();
+
+          switch (errorType) {
+            case 'expired':
+              logger.info('✓ This is normal! Studio needs to update.');
+              logger.list([
+                '1. Click "OK" on the error',
+                '2. Studio will start downloading the update',
+                '3. You\'ll see a progress bar saying "Getting the latest Roblox..."',
+                '4. Wait 1-3 minutes for the download',
+                '5. Studio will reopen automatically when done',
+                '6. Come back here and we\'ll continue'
+              ]);
+              logger.newline();
+              logger.info('💡 TIP: Don\'t close this wizard - just wait for Studio to update!');
+              break;
+
+            case 'download':
+              logger.error('Studio can\'t download the update - let\'s fix this!');
+              logger.newline();
+              logger.info('This usually happens due to network/firewall issues.');
+              logger.newline();
+              logger.info('Try these fixes in order:');
+              logger.list([
+                '1. Check your internet connection is working (try opening a website)',
+                '2. Disable VPN if you\'re using one',
+                '3. Turn off firewall/antivirus temporarily',
+                '4. Try using a different network (mobile hotspot, different WiFi)',
+                '5. Check if roblox.com is accessible in your browser',
+                '6. Contact your network admin if on corporate/school network',
+                '7. Last resort: Manually download Studio from roblox.com/create'
+              ]);
+              logger.newline();
+              logger.warning('If you see "Forbidden" or "HttpQuery failed":');
+              logger.info('Your network might be blocking Roblox\'s update servers.');
+              logger.info('Try a different internet connection or reinstall Studio manually.');
+              break;
+
+            case 'missing':
+              logger.info('Studio installation might be corrupted.');
+              logger.list([
+                '1. Close all Roblox and Studio windows',
+                '2. Go to roblox.com/create in your browser',
+                '3. Download the Studio installer',
+                '4. Run the installer (it will reinstall/repair)',
+                '5. Once done, come back and run this wizard again'
+              ]);
+              break;
+
+            case 'antivirus':
+              logger.info('Your security software is blocking Studio.');
+              logger.list([
+                '1. Open your antivirus/security software',
+                '2. Add RobloxStudioBeta.exe to exclusions/whitelist',
+                '3. Allow Studio to access the internet',
+                '4. Try launching Studio again',
+                '5. If still blocked: Temporarily disable antivirus and try again'
+              ]);
+              break;
+
+            default:
+              logger.info('General error troubleshooting:');
+              logger.list([
+                'Take a screenshot of the error message',
+                'Try restarting your computer',
+                'Reinstall Studio from roblox.com/create',
+                'Check if Windows/your OS needs updates',
+                'Google the exact error message for specific fixes'
+              ]);
+          }
           break;
 
         case 'updating':
-          logger.info('Studio is updating - this is normal!');
+          logger.info('✓ Great! Studio is updating - this is completely normal.');
+          logger.newline();
+          logger.info('Here\'s what\'s happening:');
           logger.list([
-            'Wait for the download to complete (check progress bar)',
-            'This usually takes 1-3 minutes depending on internet speed',
-            'Studio will automatically reopen when done',
-            'Don\'t close this wizard - just wait'
+            'Studio is downloading the latest version from Roblox servers',
+            'You should see a progress bar: "Getting the latest Roblox..."',
+            'The download is usually 50-200 MB',
+            'It takes 1-5 minutes depending on your internet speed',
+            'Studio will automatically close and reopen when done'
           ]);
+          logger.newline();
+          logger.warning('⚠️  IMPORTANT: Keep this wizard open!');
+          logger.info('Don\'t close this window - we\'ll continue once Studio finishes updating.');
+          logger.newline();
+
+          const waitForUpdate = await prompt.confirm(
+            'Is Studio still downloading? (Say No when it reopens)',
+            true
+          );
+
+          logger.newline();
+
+          if (waitForUpdate) {
+            logger.info('Okay, let\'s wait together...');
+            logger.newline();
+            logger.info('💡 What to watch for:');
+            logger.list([
+              'Progress bar moving forward',
+              'Percentage increasing (0% → 100%)',
+              'Download speed shown (KB/s or MB/s)',
+              'Studio window closing when download finishes',
+              'Studio reopening with a fresh window'
+            ]);
+            logger.newline();
+            logger.info('If the download fails with an error:');
+            logger.list([
+              'Click OK on any error',
+              'Come back here and say No to try troubleshooting',
+              'We\'ll help you fix the network/firewall issue'
+            ]);
+            logger.newline();
+
+            // Wait a bit to let them watch
+            logger.info('Take your time - I\'ll wait here.');
+            logger.info('Press Enter when Studio has finished updating and reopened...');
+            await prompt.confirm('', true);
+            logger.newline();
+            logger.success('✓ Great! Studio should now be updated and ready.');
+          } else {
+            logger.success('✓ Perfect! Studio has finished updating.');
+          }
+          logger.newline();
           break;
 
         case 'nothing':
