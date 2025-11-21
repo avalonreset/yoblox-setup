@@ -832,10 +832,15 @@ async function installRojoPlugin() {
   logger.info('Click the "Open in Studio" button - this will:');
   logger.list([
     '✓ Open Roblox Studio (or bring it to front)',
-    '✓ Automatically open a place for you',
+    '✓ Automatically create a workspace place',
     '✓ Automatically open the Rojo panel',
     '✓ Save you 3-4 manual steps!'
   ]);
+  logger.newline();
+
+  logger.info('📝 Note: The place name doesn\'t matter!');
+  logger.info('Rojo will sync your project code into whatever place is open.');
+  logger.info('Your project files live in the folder you created earlier.');
   logger.newline();
 
   logger.info('This is the EASIEST way to get everything set up!');
