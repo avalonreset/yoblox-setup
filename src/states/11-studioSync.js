@@ -284,15 +284,35 @@ async function launchStudio(studioCheck) {
         if (studioCheck.path) {
           logger.info(`Found Studio at: ${studioCheck.path}`);
           logger.newline();
-          await installer.execCommand(`start "" "${studioCheck.path}"`);
+
+          // Use spawn to launch Studio without waiting for it to exit
+          const { spawn } = require('child_process');
+          spawn('cmd.exe', ['/c', 'start', '', studioCheck.path], {
+            detached: true,
+            stdio: 'ignore'
+          }).unref();
+
           logger.success('✓ Studio launch command sent');
         } else {
           logger.info('Trying alternative launch method...');
-          await installer.execCommand('start roblox-studio:');
+
+          // Use spawn for protocol handler too
+          const { spawn } = require('child_process');
+          spawn('cmd.exe', ['/c', 'start', 'roblox-studio:'], {
+            detached: true,
+            stdio: 'ignore'
+          }).unref();
+
           logger.success('✓ Studio launch command sent');
         }
       } else if (os.platform() === 'darwin') {
-        await installer.execCommand('open -a "Roblox Studio"');
+        // macOS - use spawn with detached
+        const { spawn } = require('child_process');
+        spawn('open', ['-a', 'Roblox Studio'], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+
         logger.success('✓ Studio launch command sent');
       } else {
         logger.warning('Auto-launch not supported on this platform.');
