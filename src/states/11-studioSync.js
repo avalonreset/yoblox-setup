@@ -708,10 +708,57 @@ async function installRojoPlugin() {
   logger.info('We need to install it from the Roblox plugin marketplace.');
   logger.newline();
 
-  logger.warning('⚠️  IMPORTANT: Make sure you\'re logged into Roblox in your browser!');
+  // Check browser login status first
+  logger.warning('⚠️  CRITICAL: You must be logged into Roblox in your browser!');
+  logger.newline();
+  logger.info('Without logging in, you cannot install the plugin.');
   logger.newline();
 
-  const shouldOpen = await prompt.confirm('Ready to open the plugin page?', true);
+  const isLoggedIn = await prompt.confirm('Are you currently logged into Roblox in your browser?', false);
+  logger.newline();
+
+  if (!isLoggedIn) {
+    logger.info('No problem! Let\'s get you logged in now.');
+    logger.newline();
+    logger.info('Opening Roblox login page...');
+    await installer.openURL('https://www.roblox.com/login');
+    logger.success('✓ Login page opened in your browser');
+    logger.newline();
+
+    logger.info('📋 Follow these steps in your browser:');
+    logger.newline();
+    logger.list([
+      '1. You should see the Roblox login page',
+      '2. Enter your Roblox USERNAME (not email) and PASSWORD',
+      '3. Click "Log In"',
+      '4. Complete any security verification if prompted',
+      '5. Wait until you see your Roblox home page'
+    ]);
+    logger.newline();
+
+    logger.info('💡 Don\'t have a Roblox account yet?');
+    logger.list([
+      '• Click "Sign Up" on the login page',
+      '• Create a FREE account (takes 2 minutes)',
+      '• Verify your email',
+      '• Then come back here'
+    ]);
+    logger.newline();
+
+    logger.warning('⏸️  Please complete the login process before continuing.');
+    logger.info('Take your time - this wizard will wait for you.');
+    logger.newline();
+
+    await prompt.confirm('Press Enter once you are logged into Roblox...', true);
+    logger.newline();
+    logger.success('✓ Great! You should now be logged in.');
+    logger.newline();
+  } else {
+    logger.success('✓ Perfect! You\'re already logged in.');
+    logger.newline();
+  }
+
+  const shouldOpen = await prompt.confirm('Ready to open the Rojo plugin page?', true);
   logger.newline();
 
   if (shouldOpen) {
@@ -724,16 +771,34 @@ async function installRojoPlugin() {
     logger.newline();
   }
 
-  logger.info('📋 Step-by-step instructions:');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.info('  📋 PLUGIN INSTALLATION STEPS');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   logger.newline();
 
   logger.info('In your browser (the page that just opened):');
+  logger.newline();
+  logger.info('Step 1: Verify you\'re on the right page');
   logger.list([
-    '1. Make sure you see the "Rojo" plugin page',
-    '2. Look for a big green "Install" button',
-    '3. Click the "Install" button',
-    '4. You should see a confirmation that it\'s installing',
-    '5. Wait a few seconds for the installation to complete'
+    '✓ Page title should say "Rojo" or "Rojo 7.x"',
+    '✓ URL should be roblox.com/library/...',
+    '✓ You should see plugin details and screenshots'
+  ]);
+  logger.newline();
+
+  logger.info('Step 2: Find and click the Install button');
+  logger.list([
+    '✓ Look for a green "Get" or "Install" button',
+    '✓ It\'s usually in the top-right area of the page',
+    '✓ Click the button once'
+  ]);
+  logger.newline();
+
+  logger.info('Step 3: Wait for confirmation');
+  logger.list([
+    '✓ Button should change to "Installing..." or show a checkmark',
+    '✓ You might see "Successfully installed" message',
+    '✓ Installation takes only a few seconds'
   ]);
   logger.newline();
 
@@ -772,13 +837,31 @@ async function installRojoPlugin() {
 
     switch (issue) {
       case 'notloggedin':
-        logger.info('No problem! Let\'s fix that:');
+        logger.info('Let\'s get you logged in right now!');
+        logger.newline();
+        logger.info('Opening Roblox login page...');
+        await installer.openURL('https://www.roblox.com/login');
+        logger.success('✓ Login page opened');
+        logger.newline();
+
+        logger.info('📋 In your browser:');
         logger.list([
-          '1. Go to roblox.com in your browser',
-          '2. Click "Log In" at the top right',
-          '3. Enter your username and password',
-          '4. Come back here and we\'ll try again'
+          '1. Enter your Roblox USERNAME and PASSWORD',
+          '2. Click "Log In"',
+          '3. Complete any security verification',
+          '4. Wait until you see your Roblox home page'
         ]);
+        logger.newline();
+
+        logger.warning('⏸️  Complete the login, then press Enter here to continue...');
+        await prompt.confirm('', true);
+        logger.newline();
+        logger.success('✓ You should now be logged in!');
+        logger.newline();
+        logger.info('Now let\'s try installing the plugin again...');
+        logger.info('Opening plugin page...');
+        await installer.openURL(ROJO_PLUGIN_URL);
+        logger.newline();
         break;
 
       case 'nobutton':
