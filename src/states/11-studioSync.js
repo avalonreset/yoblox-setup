@@ -821,9 +821,29 @@ async function installRojoPlugin() {
   ]);
   logger.newline();
 
+  // Guide user to use "Open in Studio" button
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.info('  🎯 ONE MORE CLICK!');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.newline();
+
+  logger.success('💡 After installing, the page should show an "Open in Studio" button!');
+  logger.newline();
+  logger.info('Click the "Open in Studio" button - this will:');
+  logger.list([
+    '✓ Open Roblox Studio (or bring it to front)',
+    '✓ Automatically open a place for you',
+    '✓ Automatically open the Rojo panel',
+    '✓ Save you 3-4 manual steps!'
+  ]);
+  logger.newline();
+
+  logger.info('This is the EASIEST way to get everything set up!');
+  logger.newline();
+
   // Verification
   const installed = await prompt.confirm(
-    'Did you successfully install the plugin (or is it already installed)?',
+    'Did you install the plugin AND click "Open in Studio"?',
     true
   );
 
@@ -931,8 +951,27 @@ async function openRojoPanel() {
   logger.info('STEP 3 of 4: Open Rojo Panel in Studio');
   logger.newline();
 
-  logger.info('Now we need to open the Rojo plugin panel in Studio.');
+  logger.info('Now we need to make sure the Rojo panel is open in Studio.');
   logger.info('This is where you\'ll connect to your project.');
+  logger.newline();
+
+  // Check if they already have it from "Open in Studio" button
+  logger.info('💡 If you clicked "Open in Studio" in the previous step,');
+  logger.info('the Rojo panel might already be open!');
+  logger.newline();
+
+  const panelAlreadyOpen = await prompt.confirm('Do you see the Rojo panel open in Studio right now?', true);
+  logger.newline();
+
+  if (panelAlreadyOpen) {
+    logger.success('✓ Perfect! The Rojo panel is already open.');
+    logger.info('You can skip the rest of this step.');
+    logger.newline();
+    return true;
+  }
+
+  // Panel not open - guide them to open it
+  logger.info('No problem! Let\'s open the Rojo panel manually.');
   logger.newline();
 
   // CRITICAL: Must open a place first!
@@ -941,7 +980,7 @@ async function openRojoPanel() {
   logger.info('First, let\'s make sure you have a place open in Studio:');
   logger.newline();
 
-  const hasPlaceOpen = await prompt.confirm('Do you have a place/game open in Studio right now?', false);
+  const hasPlaceOpen = await prompt.confirm('Do you have a place/game open in Studio right now?', true);
   logger.newline();
 
   if (!hasPlaceOpen) {
