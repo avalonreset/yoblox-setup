@@ -49,6 +49,31 @@ function getShell() {
 }
 
 /**
+ * Check if Roblox Studio process is running
+ * @returns {boolean} True if Studio is running
+ */
+function isStudioRunning() {
+  try {
+    if (getOS() === 'windows') {
+      const result = execSync('tasklist /FI "IMAGENAME eq RobloxStudioBeta.exe"', {
+        encoding: 'utf8',
+        stdio: 'pipe'
+      });
+      return result.includes('RobloxStudioBeta.exe');
+    } else if (getOS() === 'macos') {
+      const result = execSync('pgrep -x "RobloxStudio"', {
+        encoding: 'utf8',
+        stdio: 'pipe'
+      });
+      return result.trim().length > 0;
+    }
+    return false;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Check if running as administrator (Windows only)
  * @returns {boolean} True if running as admin
  */
@@ -160,6 +185,7 @@ function getArch() {
 module.exports = {
   getOS,
   getShell,
+  isStudioRunning,
   isAdmin,
   getNodeVersion,
   isNodeVersionValid,

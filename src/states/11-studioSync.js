@@ -322,15 +322,49 @@ async function launchStudio(studioCheck) {
     logger.newline();
   }
 
-  // Verification with detailed help
-  logger.info('Let\'s verify Studio is open and ready...');
+  // Auto-detect Studio and ask for confirmation
+  logger.success('✓ Studio should be launching now!');
+  logger.info('Checking if Studio is running...');
+  logger.newline();
+
+  // Try to auto-detect Studio for up to 15 seconds
+  const maxDetectTime = 15000; // 15 seconds
+  const startTime = Date.now();
+  let studioDetected = false;
+
+  while (Date.now() - startTime < maxDetectTime && !studioDetected) {
+    if (system.isStudioRunning()) {
+      studioDetected = true;
+      logger.success('✓ Studio process detected!');
+      logger.newline();
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Check every second
+  }
+
+  if (studioDetected) {
+    logger.success('✓✓✓ Roblox Studio is running!');
+    logger.newline();
+    logger.info('Studio detected successfully. Continuing to next step...');
+    logger.newline();
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Brief pause
+    return true;
+  }
+
+  // Fallback to manual confirmation if auto-detect fails
+  logger.warning('Could not auto-detect Studio.');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.info('  WAITING FOR YOUR INPUT');
+  logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   logger.newline();
 
   let attempts = 0;
   const maxAttempts = 3;
 
   while (attempts < maxAttempts) {
-    const studioOpen = await prompt.confirm('Is Roblox Studio open and ready?', true);
+    logger.info('👀 Check your screen: Is Roblox Studio window open?');
+    logger.newline();
+    const studioOpen = await prompt.confirm('✅ Confirm Studio is open and ready', true);
 
     if (studioOpen) {
       logger.newline();
