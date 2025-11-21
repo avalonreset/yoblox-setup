@@ -72,6 +72,15 @@ module.exports = {
     logger.success(`✓ Rojo server is running on port ${context.rojoPort}`);
     logger.newline();
 
+    logger.warning('NOTE: If Studio shows an "expired channel build" error:');
+    logger.list([
+      'Close the error dialog',
+      'Studio should auto-update to the latest version',
+      'If it doesn\'t update, reinstall Studio from roblox.com/create',
+      'Then continue with this wizard'
+    ]);
+    logger.newline();
+
     logger.divider();
     logger.newline();
 
@@ -116,6 +125,14 @@ module.exports = {
         // Give Studio time to start
         logger.info('Waiting for Studio to start...');
         await new Promise(resolve => setTimeout(resolve, 5000));
+        logger.newline();
+
+        logger.info('If Studio didn\'t open or showed an error:');
+        logger.list([
+          'Studio may need to update (close error and let it update)',
+          'Or open Studio manually from Start menu',
+          'Wait for it to finish updating/opening'
+        ]);
         logger.newline();
       } catch (error) {
         logger.warning(`Could not auto-launch Studio: ${error.message}`);
