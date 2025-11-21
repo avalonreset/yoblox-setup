@@ -52,14 +52,19 @@ async function checkRobloxStudio() {
   }
 
   try {
+    const fs = require('fs');
+
     // Try primary location
     const files = glob.sync(config.WINDOWS.ROBLOX_STUDIO_GLOB.replace(/\\/g, '/'));
 
     if (files.length > 0) {
+      // If multiple versions found, pick the most recently modified one
+      const mostRecent = getMostRecentFile(files);
       return {
         found: true,
-        path: files[0],
-        version: null
+        path: mostRecent,
+        version: extractVersionFromPath(mostRecent),
+        allVersions: files.length
       };
     }
 
@@ -67,10 +72,13 @@ async function checkRobloxStudio() {
     const filesAlt = glob.sync(config.WINDOWS.ROBLOX_STUDIO_GLOB_ALT.replace(/\\/g, '/'));
 
     if (filesAlt.length > 0) {
+      // If multiple versions found, pick the most recently modified one
+      const mostRecent = getMostRecentFile(filesAlt);
       return {
         found: true,
-        path: filesAlt[0],
-        version: null
+        path: mostRecent,
+        version: extractVersionFromPath(mostRecent),
+        allVersions: filesAlt.length
       };
     }
 
@@ -85,6 +93,42 @@ async function checkRobloxStudio() {
       error: error.message
     };
   }
+}
+
+/**
+ * Get the most recently modified file from a list
+ * @param {Array<string>} files - Array of file paths
+ * @returns {string} Path to most recent file
+ */
+function getMostRecentFile(files) {
+  const fs = require('fs');
+
+  if (files.length === 1) {
+    return files[0];
+  }
+
+  // Sort by modification time (most recent first)
+  const sorted = files.sort((a, b) => {
+    try {
+      const statA = fs.statSync(a);
+      const statB = fs.statSync(b);
+      return statB.mtime.getTime() - statA.mtime.getTime();
+    } catch (error) {
+      return 0;
+    }
+  });
+
+  return sorted[0];
+}
+
+/**
+ * Extract version string from Studio path
+ * @param {string} path - Path to RobloxStudioBeta.exe
+ * @returns {string|null} Version string (e.g., "version-b0be9ce0740f40b4")
+ */
+function extractVersionFromPath(path) {
+  const match = path.match(/version-([a-f0-9]+)/i);
+  return match ? match[0] : null;
 }
 
 /**

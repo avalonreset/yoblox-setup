@@ -63,6 +63,12 @@ module.exports = {
     }
 
     logger.success('✓ Roblox Studio is installed');
+    if (studioCheck.version) {
+      logger.info(`  Version: ${studioCheck.version}`);
+    }
+    if (studioCheck.allVersions && studioCheck.allVersions > 1) {
+      logger.info(`  Found ${studioCheck.allVersions} Studio versions - using most recent`);
+    }
     logger.success(`✓ Rojo server is running on port ${context.rojoPort}`);
     logger.newline();
 
