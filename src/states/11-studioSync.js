@@ -790,16 +790,26 @@ async function installRojoPlugin() {
   logger.list([
     '✓ Look for a green "Get" or "Install" button',
     '✓ It\'s usually in the top-right area of the page',
-    '✓ Click the button once'
+    '✓ Click the button ONCE (don\'t spam click)'
   ]);
+  logger.newline();
+  logger.info('💡 LOOK FOR THIS:');
+  logger.info('   ┌─────────────────┐');
+  logger.info('   │  [Get Plugin]   │  ← Click this button');
+  logger.info('   └─────────────────┘');
   logger.newline();
 
   logger.info('Step 3: Wait for confirmation');
   logger.list([
     '✓ Button should change to "Installing..." or show a checkmark',
     '✓ You might see "Successfully installed" message',
-    '✓ Installation takes only a few seconds'
+    '✓ Installation takes only a few seconds',
+    '✓ The plugin will appear in Studio automatically'
   ]);
+  logger.newline();
+
+  logger.success('That\'s it! The plugin is now installed to your Studio account.');
+  logger.info('You don\'t need to restart Studio - the plugin is ready to use!');
   logger.newline();
 
   logger.info('💡 Troubleshooting tips:');
