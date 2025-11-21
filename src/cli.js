@@ -8,8 +8,9 @@
 const StateMachine = require('./statemachine');
 const logger = require('./utils/logger');
 const system = require('./utils/system');
+const processManager = require('./utils/process');
 
-// Import all states
+// Import all states (13 states for v2.0)
 const welcome = require('./states/welcome');
 const robloxStudio = require('./states/robloxStudio');
 const vscode = require('./states/vscode');
@@ -19,7 +20,10 @@ const rojo = require('./states/rojo');
 const vscodeExtensions = require('./states/vscodeExtensions');
 const aiCLI = require('./states/aiCLI');
 const scaffold = require('./states/scaffold');
-const complete = require('./states/complete');
+const rojoServer = require('./states/10-rojoServer');
+const studioSync = require('./states/11-studioSync');
+const syncVerification = require('./states/12-syncVerification');
+const finalSummary = require('./states/13-finalSummary');
 
 /**
  * Run the setup wizard
@@ -37,28 +41,55 @@ async function run(options = {}) {
     process.exit(1);
   }
 
-  // Define all states in order
+  // Define all states in order (13 states for v2.0)
   const states = [
-    welcome,
-    robloxStudio,
-    vscode,
-    git,
-    rust,
-    rojo,
-    vscodeExtensions,
-    aiCLI,
-    scaffold,
-    complete
+    welcome,           // 1. Welcome & Prerequisites Check
+    robloxStudio,      // 2. Roblox Studio Installation
+    vscode,            // 3. VS Code Installation
+    git,               // 4. Git Installation (Optional)
+    rust,              // 5. Rust + Cargo Installation
+    rojo,              // 6. Rojo Installation
+    vscodeExtensions,  // 7. VS Code Extensions
+    aiCLI,             // 8. AI CLI Selection & Installation
+    scaffold,          // 9. Project Scaffolding
+    rojoServer,        // 10. Rojo Server Launch (NEW)
+    studioSync,        // 11. Studio Connection Setup (NEW)
+    syncVerification,  // 12. End-to-End Sync Test (NEW)
+    finalSummary       // 13. Final Summary & Actions (NEW)
   ];
 
   // Create and run state machine
   const machine = new StateMachine(states, options);
 
+  // Setup graceful shutdown for background processes
+  const cleanup = async () => {
+    logger.newline();
+    logger.warning('Shutting down...');
+    await processManager.stopAll();
+    logger.info('Cleanup complete.');
+  };
+
+  process.on('SIGINT', async () => {
+    await cleanup();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    await cleanup();
+    process.exit(0);
+  });
+
   try {
     await machine.run();
     logger.success('\nSetup completed successfully!');
+
+    // Cleanup background processes after successful completion
+    await processManager.stopAll();
   } catch (error) {
     logger.error('\nSetup failed:');
+
+    // Cleanup on error
+    await processManager.stopAll();
     throw error;
   }
 }

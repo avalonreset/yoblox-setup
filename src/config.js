@@ -8,7 +8,39 @@
 module.exports = {
   // Version requirements
   REQUIRED_NODE_VERSION: '14.0.0',
-  VERSION: '1.0.0',
+  VERSION: '2.0.0',
+
+  // Minimum version requirements
+  MIN_VERSIONS: {
+    node: '14.0.0',
+    cargo: '1.70.0',
+    rojo: '7.0.0',
+    rustc: '1.70.0'
+  },
+
+  // Rojo server configuration
+  ROJO: {
+    DEFAULT_PORT: 34872,
+    FALLBACK_PORTS: [34873, 34874, 34875, 34876],
+    STARTUP_TIMEOUT: 15000,  // 15 seconds
+    PORT_CHECK_TIMEOUT: 10000,  // 10 seconds
+    HEALTH_CHECK_INTERVAL: 2000  // 2 seconds
+  },
+
+  // Roblox Studio configuration
+  STUDIO: {
+    PLUGIN_MARKETPLACE_URL: 'https://www.roblox.com/library/13916111004/Rojo',
+    PLUGIN_NAME: 'Rojo 7.x',
+    LAUNCH_TIMEOUT: 30000,  // 30 seconds
+    SYNC_TEST_TIMEOUT: 60000  // 60 seconds
+  },
+
+  // Verification configuration
+  VERIFICATION: {
+    TEST_FILE_NAME: '_yoblox_test_sync.lua',
+    TEST_FILE_CONTENT: '-- Test file created by yoblox-setup\nprint("Sync working!")',
+    WAIT_FOR_SYNC_TIMEOUT: 30000  // 30 seconds
+  },
 
   // Download URLs
   ROBLOX_STUDIO_URL: 'https://www.roblox.com/create',
