@@ -88,20 +88,17 @@ module.exports = {
           if (studioCheck.path) {
             // Use the detected Studio path
             logger.info(`Found Studio at: ${studioCheck.path}`);
-            await system.runCommand(`"${studioCheck.path}"`, {
-              shell: true,
-              detached: true
-            });
+            await installer.execCommand(`start "" "${studioCheck.path}"`);
             logger.success('✓ Studio launched successfully');
           } else {
             // Fallback: try URI scheme
             logger.info('Trying URI scheme fallback...');
-            await system.runCommand('start roblox-studio:', { shell: true });
+            await installer.execCommand('start roblox-studio:');
             logger.success('✓ Studio launch command sent');
           }
         } else if (os.platform() === 'darwin') {
           // macOS: Use open command
-          await system.runCommand('open -a "Roblox Studio"');
+          await installer.execCommand('open -a "Roblox Studio"');
           logger.success('✓ Studio launch command sent');
         } else {
           logger.warning('Auto-launch not supported on this platform.');
