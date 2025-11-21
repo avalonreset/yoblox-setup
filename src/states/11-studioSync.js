@@ -935,10 +935,50 @@ async function openRojoPanel() {
   logger.info('This is where you\'ll connect to your project.');
   logger.newline();
 
-  logger.info('📋 Step-by-step instructions:');
+  // CRITICAL: Must open a place first!
+  logger.warning('⚠️  IMPORTANT: Plugins only work when you have a place open!');
+  logger.newline();
+  logger.info('First, let\'s make sure you have a place open in Studio:');
   logger.newline();
 
-  logger.info('In Roblox Studio (the Studio window):');
+  const hasPlaceOpen = await prompt.confirm('Do you have a place/game open in Studio right now?', false);
+  logger.newline();
+
+  if (!hasPlaceOpen) {
+    logger.info('No problem! Let\'s open a place now.');
+    logger.newline();
+    logger.info('📋 In Roblox Studio:');
+    logger.list([
+      '1. Look for the "New" button or "File" menu',
+      '2. Click "New" or "File" → "New"',
+      '3. Choose any template (Baseplate is easiest)',
+      '4. Wait for the 3D viewport to appear',
+      '5. You should see a 3D world with grid/baseplate'
+    ]);
+    logger.newline();
+
+    logger.info('💡 Alternative: Open an existing place');
+    logger.list([
+      '• Click "File" → "Open from Roblox"',
+      '• Select any of your existing games',
+      '• Or just create a new Baseplate (quickest)'
+    ]);
+    logger.newline();
+
+    logger.warning('⏸️  Open a place in Studio, then press Enter here...');
+    await prompt.confirm('', true);
+    logger.newline();
+    logger.success('✓ Great! Now you have a place open.');
+    logger.newline();
+  } else {
+    logger.success('✓ Perfect! You already have a place open.');
+    logger.newline();
+  }
+
+  logger.info('📋 Now let\'s find the Rojo button:');
+  logger.newline();
+
+  logger.info('In Roblox Studio (with your place open):');
   logger.list([
     '1. Look at the top toolbar (where all the buttons are)',
     '2. Find a button that says "Rojo" with a red/orange icon',
@@ -990,13 +1030,20 @@ async function openRojoPanel() {
     switch (issue) {
       case 'nobutton':
         logger.info('If you don\'t see the Rojo button:');
+        logger.newline();
+        logger.warning('⚠️  MOST COMMON ISSUE: Do you have a PLACE open?');
+        logger.info('Plugins ONLY show up when you have a place/game open in Studio!');
+        logger.newline();
         logger.list([
-          '1. The plugin might not have installed - go back to Step 2',
-          '2. Try closing Studio completely and reopening it',
-          '3. In Studio, go to PLUGINS tab at the top',
-          '4. Look for "Manage Plugins" and check if Rojo is enabled',
-          '5. Make sure you\'re logged into the same Roblox account'
+          '1. Make sure you have a place open (File → New → Baseplate)',
+          '2. Wait for the 3D viewport to fully load',
+          '3. Then look for the Rojo button in the toolbar',
+          '4. If still not there: Close Studio, reopen it, open a place',
+          '5. Check PLUGINS tab at the top → Manage Plugins → Enable Rojo'
         ]);
+        logger.newline();
+        logger.info('💡 The Rojo button will NEVER appear on the Studio home screen.');
+        logger.info('You MUST open a place first!');
         break;
 
       case 'nopanel':
