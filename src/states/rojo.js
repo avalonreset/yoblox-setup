@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const validator = require('../utils/validator');
 const installer = require('../utils/installer');
 const prompt = require('../utils/prompt');
+const versionChecker = require('../utils/versionChecker');
 
 module.exports = {
   name: 'rojo',
@@ -24,14 +25,59 @@ module.exports = {
     const checkResult = await this.check(context);
 
     if (checkResult.found) {
-      logger.success(`✓ Rojo is already installed (${checkResult.version})`);
+      logger.success(`✓ Rojo is already installed`);
+      logger.newline();
+
+      // Check for updates
+      logger.info('Checking for updates...');
+      const updateInfo = await versionChecker.checkRojoUpdate();
+
+      if (updateInfo.error) {
+        logger.warning(`Could not check for updates: ${updateInfo.error}`);
+        logger.info('Continuing with current version...');
+      } else if (updateInfo.hasUpdate) {
+        logger.newline();
+        logger.warning('⚠️  A newer version of Rojo is available!');
+        logger.info(`  Current version: ${updateInfo.current}`);
+        logger.info(`  Latest version: ${updateInfo.latest}`);
+        logger.newline();
+
+        const shouldUpdate = await prompt.confirm(
+          `Would you like to update Rojo to ${updateInfo.latest}?`,
+          true
+        );
+
+        if (shouldUpdate) {
+          logger.newline();
+          logger.info(`Updating Rojo from ${updateInfo.current} to ${updateInfo.latest}...`);
+          logger.warning('This will take 5-10 minutes...');
+          logger.newline();
+
+          const updateSuccess = await installer.installRojo();
+
+          if (updateSuccess) {
+            logger.newline();
+            logger.success(`✓ Rojo updated to ${updateInfo.latest}!`);
+            logger.newline();
+          } else {
+            logger.error('Update failed. Continuing with current version...');
+          }
+        } else {
+          logger.info(`Continuing with Rojo ${updateInfo.current}`);
+        }
+      } else {
+        logger.success(`✓ Rojo is up-to-date (v${updateInfo.current})`);
+      }
+
+      logger.newline();
+      logger.divider();
+      logger.newline();
+
       return {
         success: true,
         data: {
-          installedTools: {
-            ...context.installedTools,
-            rojo: true
-          }
+          rojoInstalled: true,
+          rojoVersion: updateInfo.current || checkResult.version
         }
       };
     }
