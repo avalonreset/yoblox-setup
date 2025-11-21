@@ -322,7 +322,7 @@ async function launchStudio(studioCheck) {
     logger.newline();
   }
 
-  // Auto-detect Studio and ask for confirmation
+  // Auto-detect Studio and verify user is logged in
   logger.success('✓ Studio should be launching now!');
   logger.info('Checking if Studio is running...');
   logger.newline();
@@ -345,26 +345,76 @@ async function launchStudio(studioCheck) {
   if (studioDetected) {
     logger.success('✓✓✓ Roblox Studio is running!');
     logger.newline();
-    logger.info('Studio detected successfully. Continuing to next step...');
-    logger.newline();
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Brief pause
-    return true;
+
+    // Check if user is logged in
+    logger.info('Checking login status...');
+    const loginCheck = await validator.checkStudioLoggedIn();
+
+    if (loginCheck.loggedIn && loginCheck.confidence === 'high') {
+      logger.success(`✓ Login detected! (${loginCheck.reason})`);
+      logger.newline();
+      logger.info('Studio is ready. Continuing to next step...');
+      logger.newline();
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Brief pause
+      return true;
+    } else if (loginCheck.loggedIn && loginCheck.confidence === 'medium') {
+      logger.warning(`⚠️  Login status uncertain: ${loginCheck.reason}`);
+      logger.newline();
+      logger.info('Studio is running, but we need to confirm you\'re logged in.');
+      // Fall through to manual confirmation
+    } else {
+      logger.warning('⚠️  No login detected');
+      logger.newline();
+      logger.info('Studio is running, but you may need to log in.');
+      logger.newline();
+      logger.info('📋 Make sure you:');
+      logger.list([
+        'See the Studio home screen (not a login prompt)',
+        'Are logged into your Roblox account',
+        'Can see "Create", "Recent", etc. in Studio'
+      ]);
+      logger.newline();
+      // Fall through to manual confirmation
+    }
   }
 
-  // Fallback to manual confirmation if auto-detect fails
-  logger.warning('Could not auto-detect Studio.');
+  // Manual confirmation with clear criteria
+  if (!studioDetected) {
+    logger.warning('Could not auto-detect Studio.');
+    logger.newline();
+  }
+
   logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  logger.info('  WAITING FOR YOUR INPUT');
+  logger.info('  ⏸️  MANUAL CONFIRMATION REQUIRED');
   logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.newline();
+
+  logger.info('Before we continue, verify Studio is FULLY READY:');
+  logger.newline();
+  logger.info('✅ Required checks:');
+  logger.list([
+    '✓ Studio window is open on your screen',
+    '✓ You are LOGGED IN to your Roblox account',
+    '✓ You see the Studio home screen (not a login/error screen)',
+    '✓ You can see tabs like "Create", "Recent Games", etc.',
+    '✓ No error popups or loading screens'
+  ]);
+  logger.newline();
+
+  logger.warning('🚫 Do NOT continue if:');
+  logger.list([
+    'You see a login screen',
+    'Studio is showing an error',
+    'Studio is still loading/updating',
+    'You\'re not logged in yet'
+  ]);
   logger.newline();
 
   let attempts = 0;
   const maxAttempts = 3;
 
   while (attempts < maxAttempts) {
-    logger.info('👀 Check your screen: Is Roblox Studio window open?');
-    logger.newline();
-    const studioOpen = await prompt.confirm('✅ Confirm Studio is open and ready', true);
+    const studioOpen = await prompt.confirm('✅ Studio is open AND you are logged in?', true);
 
     if (studioOpen) {
       logger.newline();

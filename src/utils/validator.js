@@ -207,6 +207,76 @@ async function checkVSCodeExtension(extensionId) {
 }
 
 /**
+ * Check if user is logged into Roblox Studio
+ * @returns {Promise<Object>} Result with loggedIn flag and indicators
+ */
+async function checkStudioLoggedIn() {
+  try {
+    const os = require('os');
+    const path = require('path');
+
+    // Studio stores auth in LocalStorage
+    const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+    const studioLocalStorage = path.join(localAppData, 'Roblox', 'LocalStorage');
+
+    // Check if LocalStorage directory exists and has content
+    if (fs.existsSync(studioLocalStorage)) {
+      const files = fs.readdirSync(studioLocalStorage);
+
+      // Look for authentication indicators
+      // Studio creates files like "https_www.roblox.com_0.localstorage" when logged in
+      const hasAuthFiles = files.some(file =>
+        file.includes('roblox.com') && file.endsWith('.localstorage')
+      );
+
+      if (hasAuthFiles) {
+        // Check if files are recent (modified in last 30 days)
+        let hasRecentAuth = false;
+        for (const file of files) {
+          if (file.includes('roblox.com')) {
+            const filePath = path.join(studioLocalStorage, file);
+            const stats = fs.statSync(filePath);
+            const daysSinceModified = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceModified < 30) {
+              hasRecentAuth = true;
+              break;
+            }
+          }
+        }
+
+        return {
+          loggedIn: hasRecentAuth,
+          confidence: hasRecentAuth ? 'high' : 'low',
+          reason: hasRecentAuth ? 'Recent auth files found' : 'Auth files exist but are old'
+        };
+      }
+    }
+
+    // Check for Studio plugins folder (another indicator of logged-in user)
+    const pluginsPath = path.join(localAppData, 'Roblox', 'Plugins');
+    if (fs.existsSync(pluginsPath)) {
+      return {
+        loggedIn: true,
+        confidence: 'medium',
+        reason: 'Plugins folder exists (user has logged in before)'
+      };
+    }
+
+    return {
+      loggedIn: false,
+      confidence: 'low',
+      reason: 'No login indicators found'
+    };
+  } catch (error) {
+    return {
+      loggedIn: false,
+      confidence: 'unknown',
+      error: error.message
+    };
+  }
+}
+
+/**
  * Check Node.js version
  * @returns {Object} Result with found flag and version
  */
@@ -325,6 +395,7 @@ async function checkAiCli(binaryName) {
 module.exports = {
   commandExists,
   checkRobloxStudio,
+  checkStudioLoggedIn,
   checkVSCode,
   checkGit,
   checkRust,
