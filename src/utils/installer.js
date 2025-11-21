@@ -338,6 +338,59 @@ function findDirectory(parentPath, pattern) {
   }
 }
 
+/**
+ * Download and install Roblox Studio
+ * @returns {Promise<boolean>} Success flag
+ */
+async function downloadAndInstallStudio() {
+  const os = require('os');
+  const logger = require('./logger');
+
+  try {
+    logger.info('Downloading Roblox Studio installer...');
+    logger.newline();
+
+    // Download URL for latest Studio
+    const studioUrl = 'https://setup.rbxcdn.com/RobloxStudioInstaller.exe';
+    const tempDir = path.join(os.tmpdir(), 'yoblox-setup');
+    const installerPath = path.join(tempDir, 'RobloxStudioInstaller.exe');
+
+    // Ensure temp directory exists
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    // Download the installer
+    await downloadFile(studioUrl, installerPath);
+    logger.newline();
+    logger.success('✓ Studio installer downloaded!');
+    logger.newline();
+
+    // Run the installer
+    logger.info('Launching Studio installer...');
+    logger.info('The installer window will open - follow the installation wizard.');
+    logger.newline();
+
+    // Launch installer (it will run in the foreground)
+    await execCommand(`start "" "${installerPath}"`);
+
+    logger.info('💡 The installer is running. When it finishes:');
+    logger.list([
+      'Studio will open automatically',
+      'Or you can open it from Start menu',
+      'Come back to this wizard to continue'
+    ]);
+    logger.newline();
+
+    return true;
+  } catch (error) {
+    logger.error(`Failed to download Studio: ${error.message}`);
+    logger.newline();
+    logger.info('Please download manually from: https://www.roblox.com/create');
+    return false;
+  }
+}
+
 module.exports = {
   downloadFile,
   runCommand,
@@ -351,5 +404,6 @@ module.exports = {
   extractZip,
   copyDirectory,
   cleanupDirectory,
-  findDirectory
+  findDirectory,
+  downloadAndInstallStudio
 };

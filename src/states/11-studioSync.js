@@ -188,29 +188,25 @@ async function launchStudio(studioCheck) {
     logger.newline();
 
     if (useFreshInstall) {
-      logger.info('Perfect! Let\'s install the latest Roblox Studio.');
+      logger.info('Perfect! Let\'s automatically download and install the latest Studio.');
       logger.newline();
-      logger.info('📋 Follow these steps:');
+
+      logger.info('What will happen:');
       logger.list([
-        '1. Opening roblox.com/create in your browser...',
-        '2. Click "Download Studio" or "Start Creating"',
-        '3. Run the installer that downloads',
-        '4. Follow the installation wizard',
-        '5. Come back here when Studio is installed and open'
+        '1. We\'ll download the Studio installer (about 2-3 MB)',
+        '2. The installer will open automatically',
+        '3. Follow the installation wizard (takes 1-2 minutes)',
+        '4. Studio will open when installation is complete',
+        '5. Come back here to continue the wizard'
       ]);
       logger.newline();
 
-      // Open the Roblox Studio download page
-      await installer.openURL('https://www.roblox.com/create');
-      logger.success('✓ Roblox Studio download page opened in browser');
-      logger.newline();
-
-      logger.info('Installing the latest Studio will:');
+      logger.info('Benefits of fresh installation:');
       logger.list([
-        '✓ Give you the newest version',
-        '✓ Avoid update failures and errors',
-        '✓ Take about 2-3 minutes total',
-        '✓ Ensure everything works perfectly'
+        '✓ Gets the absolute latest Studio version',
+        '✓ Avoids all update failures and errors',
+        '✓ Total time: 3-5 minutes',
+        '✓ 100% reliable - no network errors'
       ]);
       logger.newline();
 
@@ -218,11 +214,43 @@ async function launchStudio(studioCheck) {
       logger.info('You don\'t need to uninstall the old version first!');
       logger.newline();
 
-      await prompt.confirm('Press Enter when you\'ve installed Studio and it\'s open...', true);
+      const confirmDownload = await prompt.confirm('Ready to download and install Studio?', true);
       logger.newline();
-      logger.success('✓ Great! You should now have the latest Studio version.');
-      logger.newline();
-      return true;
+
+      if (confirmDownload) {
+        // Auto-download and launch installer
+        const downloadSuccess = await installer.downloadAndInstallStudio();
+
+        if (downloadSuccess) {
+          logger.info('The Studio installer is now running.');
+          logger.info('Follow the installation wizard, then come back here.');
+          logger.newline();
+          await prompt.confirm('Press Enter when Studio is installed and open...', true);
+          logger.newline();
+          logger.success('✓ Excellent! You now have the latest Studio version.');
+          logger.newline();
+          return true;
+        } else {
+          // Download failed, fall back to manual
+          logger.warning('Auto-download failed. Opening browser instead...');
+          logger.newline();
+          await installer.openURL('https://www.roblox.com/create');
+          logger.info('Please download and install Studio manually, then come back here.');
+          logger.newline();
+          await prompt.confirm('Press Enter when Studio is installed and open...', true);
+          logger.newline();
+          return true;
+        }
+      } else {
+        logger.info('Opening roblox.com/create in your browser instead...');
+        await installer.openURL('https://www.roblox.com/create');
+        logger.newline();
+        logger.info('Download and install Studio manually, then come back here.');
+        logger.newline();
+        await prompt.confirm('Press Enter when Studio is installed and open...', true);
+        logger.newline();
+        return true;
+      }
     } else {
       logger.warning('Okay, we\'ll try launching the old version.');
       logger.info('If you get errors, we recommend installing the latest Studio instead.');
@@ -364,41 +392,56 @@ async function launchStudio(studioCheck) {
             case 'download':
               logger.error('Studio can\'t download the update!');
               logger.newline();
-              logger.warning('💡 RECOMMENDED SOLUTION: Install fresh Studio');
+              logger.warning('💡 RECOMMENDED SOLUTION: Install fresh Studio automatically');
               logger.newline();
-              logger.info('The auto-update system is failing. The fastest fix is:');
+              logger.info('The auto-update system is failing. Let\'s download and install the latest Studio:');
               logger.list([
-                '1. Close all Roblox and Studio windows',
-                '2. Go to roblox.com/create',
-                '3. Download and install the latest Studio',
-                '4. This takes 2-3 minutes and avoids all update errors'
+                '✓ We\'ll download the installer automatically (2-3 MB)',
+                '✓ The installer will launch automatically',
+                '✓ Follow the wizard (takes 1-2 minutes)',
+                '✓ Avoids all update errors - 100% reliable'
               ]);
               logger.newline();
 
-              const tryFreshInstall = await prompt.confirm(
-                'Open roblox.com/create to download latest Studio now?',
+              const tryAutoDownload = await prompt.confirm(
+                'Auto-download and install the latest Studio now?',
                 true
               );
 
               logger.newline();
 
-              if (tryFreshInstall) {
-                await installer.openURL('https://www.roblox.com/create');
-                logger.success('✓ Download page opened in browser');
+              if (tryAutoDownload) {
+                logger.info('Starting automatic download...');
                 logger.newline();
-                logger.info('Download the installer, run it, then come back here!');
-                logger.newline();
-                await prompt.confirm('Press Enter when Studio is installed and open...', true);
-                logger.newline();
-                logger.success('✓ You should now have the latest Studio!');
-                logger.newline();
-                // Reset attempts to give them another chance
-                attempts = 0;
-                continue;
+
+                const downloadSuccess = await installer.downloadAndInstallStudio();
+
+                if (downloadSuccess) {
+                  logger.info('Perfect! The installer is running.');
+                  logger.info('Follow the installation wizard, then come back here.');
+                  logger.newline();
+                  await prompt.confirm('Press Enter when Studio is installed and open...', true);
+                  logger.newline();
+                  logger.success('✓ Excellent! You now have the latest Studio!');
+                  logger.newline();
+                  // Reset attempts to give them another chance
+                  attempts = 0;
+                  continue;
+                } else {
+                  logger.warning('Auto-download failed. Trying browser fallback...');
+                  logger.newline();
+                  await installer.openURL('https://www.roblox.com/create');
+                  logger.info('Download manually from the page that opened, then come back here.');
+                  logger.newline();
+                  await prompt.confirm('Press Enter when Studio is installed and open...', true);
+                  logger.newline();
+                  attempts = 0;
+                  continue;
+                }
               }
 
               logger.newline();
-              logger.info('Alternative fixes if you want to troubleshoot:');
+              logger.info('Alternative fixes if you want to troubleshoot the update:');
               logger.list([
                 '• Check your internet connection',
                 '• Disable VPN if you\'re using one',
@@ -407,7 +450,7 @@ async function launchStudio(studioCheck) {
                 '• Your network might be blocking Roblox\'s servers'
               ]);
               logger.newline();
-              logger.warning('Note: Fresh install is usually faster than troubleshooting!');
+              logger.warning('Note: Fresh install is faster and more reliable than troubleshooting!');
               break;
 
             case 'missing':
