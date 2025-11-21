@@ -158,20 +158,91 @@ async function launchStudio(studioCheck) {
   logger.info('If Studio is already open, that\'s perfectly fine!');
   logger.newline();
 
-  // Check for common Studio issues first
+  // Check if Studio version is very old (might have update issues)
+  const fs = require('fs');
+  let studioIsVeryOld = false;
+
+  if (studioCheck.path) {
+    try {
+      const stats = fs.statSync(studioCheck.path);
+      const daysSinceModified = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24);
+      studioIsVeryOld = daysSinceModified > 30; // More than 30 days old
+    } catch (error) {
+      // Ignore errors, just proceed
+    }
+  }
+
+  // If Studio is very old, recommend fresh install instead
+  if (studioIsVeryOld) {
+    logger.warning('⚠️  DETECTED: Your Studio installation is over 30 days old');
+    logger.newline();
+    logger.info('Old Studio versions often fail to update properly.');
+    logger.info('We recommend installing a fresh copy instead of trying to update.');
+    logger.newline();
+
+    const useFreshInstall = await prompt.confirm(
+      'Would you like to install the latest Studio now? (Recommended)',
+      true
+    );
+
+    logger.newline();
+
+    if (useFreshInstall) {
+      logger.info('Perfect! Let\'s install the latest Roblox Studio.');
+      logger.newline();
+      logger.info('📋 Follow these steps:');
+      logger.list([
+        '1. Opening roblox.com/create in your browser...',
+        '2. Click "Download Studio" or "Start Creating"',
+        '3. Run the installer that downloads',
+        '4. Follow the installation wizard',
+        '5. Come back here when Studio is installed and open'
+      ]);
+      logger.newline();
+
+      // Open the Roblox Studio download page
+      await installer.openURL('https://www.roblox.com/create');
+      logger.success('✓ Roblox Studio download page opened in browser');
+      logger.newline();
+
+      logger.info('Installing the latest Studio will:');
+      logger.list([
+        '✓ Give you the newest version',
+        '✓ Avoid update failures and errors',
+        '✓ Take about 2-3 minutes total',
+        '✓ Ensure everything works perfectly'
+      ]);
+      logger.newline();
+
+      logger.info('💡 TIP: The installer will update your existing Studio.');
+      logger.info('You don\'t need to uninstall the old version first!');
+      logger.newline();
+
+      await prompt.confirm('Press Enter when you\'ve installed Studio and it\'s open...', true);
+      logger.newline();
+      logger.success('✓ Great! You should now have the latest Studio version.');
+      logger.newline();
+      return true;
+    } else {
+      logger.warning('Okay, we\'ll try launching the old version.');
+      logger.info('If you get errors, we recommend installing the latest Studio instead.');
+      logger.newline();
+    }
+  }
+
+  // Check for common Studio issues
   logger.warning('⚠️  IMPORTANT: About Studio Updates');
   logger.newline();
-  logger.info('If Studio shows an "expired channel build" error:');
+  logger.info('If Studio shows an error about "expired build" or "failed to download":');
   logger.list([
-    '1. Click "OK" to close the error',
-    '2. Studio will automatically download the latest version',
-    '3. Wait for the download to complete (1-2 minutes)',
-    '4. Studio will reopen automatically when done',
-    '5. Come back to this window and press Enter to continue'
+    '❌ DON\'T wait for the auto-update - it often fails with old versions',
+    '✓ INSTEAD: Close the error and come back here',
+    '✓ We\'ll help you install the latest Studio properly'
   ]);
   logger.newline();
 
-  logger.info('This is normal if you haven\'t opened Studio in a while.');
+  logger.info('The auto-update system is unreliable for old Studio versions.');
+  logger.info('Fresh installation is faster and more reliable!');
   logger.newline();
 
   const shouldLaunch = await prompt.confirm('Ready to launch Roblox Studio?', true);
@@ -291,24 +362,52 @@ async function launchStudio(studioCheck) {
               break;
 
             case 'download':
-              logger.error('Studio can\'t download the update - let\'s fix this!');
+              logger.error('Studio can\'t download the update!');
               logger.newline();
-              logger.info('This usually happens due to network/firewall issues.');
+              logger.warning('💡 RECOMMENDED SOLUTION: Install fresh Studio');
               logger.newline();
-              logger.info('Try these fixes in order:');
+              logger.info('The auto-update system is failing. The fastest fix is:');
               logger.list([
-                '1. Check your internet connection is working (try opening a website)',
-                '2. Disable VPN if you\'re using one',
-                '3. Turn off firewall/antivirus temporarily',
-                '4. Try using a different network (mobile hotspot, different WiFi)',
-                '5. Check if roblox.com is accessible in your browser',
-                '6. Contact your network admin if on corporate/school network',
-                '7. Last resort: Manually download Studio from roblox.com/create'
+                '1. Close all Roblox and Studio windows',
+                '2. Go to roblox.com/create',
+                '3. Download and install the latest Studio',
+                '4. This takes 2-3 minutes and avoids all update errors'
               ]);
               logger.newline();
-              logger.warning('If you see "Forbidden" or "HttpQuery failed":');
-              logger.info('Your network might be blocking Roblox\'s update servers.');
-              logger.info('Try a different internet connection or reinstall Studio manually.');
+
+              const tryFreshInstall = await prompt.confirm(
+                'Open roblox.com/create to download latest Studio now?',
+                true
+              );
+
+              logger.newline();
+
+              if (tryFreshInstall) {
+                await installer.openURL('https://www.roblox.com/create');
+                logger.success('✓ Download page opened in browser');
+                logger.newline();
+                logger.info('Download the installer, run it, then come back here!');
+                logger.newline();
+                await prompt.confirm('Press Enter when Studio is installed and open...', true);
+                logger.newline();
+                logger.success('✓ You should now have the latest Studio!');
+                logger.newline();
+                // Reset attempts to give them another chance
+                attempts = 0;
+                continue;
+              }
+
+              logger.newline();
+              logger.info('Alternative fixes if you want to troubleshoot:');
+              logger.list([
+                '• Check your internet connection',
+                '• Disable VPN if you\'re using one',
+                '• Turn off firewall/antivirus temporarily',
+                '• Try a different network (mobile hotspot)',
+                '• Your network might be blocking Roblox\'s servers'
+              ]);
+              logger.newline();
+              logger.warning('Note: Fresh install is usually faster than troubleshooting!');
               break;
 
             case 'missing':
