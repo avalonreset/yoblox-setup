@@ -84,25 +84,38 @@ module.exports = {
         logger.info('Launching Roblox Studio...');
 
         if (os.platform() === 'win32') {
-          // Windows: Use start command to open Studio
-          await system.runCommand('start roblox-studio:', { shell: true });
+          // Windows: Launch the actual RobloxStudioBeta.exe
+          if (studioCheck.path) {
+            // Use the detected Studio path
+            logger.info(`Found Studio at: ${studioCheck.path}`);
+            await system.runCommand(`"${studioCheck.path}"`, {
+              shell: true,
+              detached: true
+            });
+            logger.success('✓ Studio launched successfully');
+          } else {
+            // Fallback: try URI scheme
+            logger.info('Trying URI scheme fallback...');
+            await system.runCommand('start roblox-studio:', { shell: true });
+            logger.success('✓ Studio launch command sent');
+          }
         } else if (os.platform() === 'darwin') {
           // macOS: Use open command
           await system.runCommand('open -a "Roblox Studio"');
+          logger.success('✓ Studio launch command sent');
         } else {
           logger.warning('Auto-launch not supported on this platform.');
           logger.info('Please open Roblox Studio manually.');
         }
 
-        logger.success('✓ Studio launch command sent');
         logger.newline();
 
         // Give Studio time to start
         logger.info('Waiting for Studio to start...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
         logger.newline();
       } catch (error) {
-        logger.warning('Could not auto-launch Studio.');
+        logger.warning(`Could not auto-launch Studio: ${error.message}`);
         logger.info('Please open Roblox Studio manually and continue.');
         logger.newline();
       }
